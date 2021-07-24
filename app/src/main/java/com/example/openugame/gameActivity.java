@@ -27,6 +27,7 @@ public class gameActivity extends AppCompatActivity {
     public ProgressDialog progress = null;
     public long startTime = 0;
     public int round_num = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -121,15 +122,15 @@ public class gameActivity extends AppCompatActivity {
         Collections.reverse(select_color);
         if (select_color.equals(colors)){
             progress.setMessage("Perfect!!! its took you "+difference_sec+" sec...\nWaiting for the opponent result...");
+            round_num += 1;
+            round.setText("Round num : "+round_num);
+            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+            progress.show();
         }else{
-            progress.setMessage("Seems you've been wrong...");
+            Toast.makeText(gameActivity.this, "Seems you've been wrong..." , Toast.LENGTH_LONG).show();
+            resetAllCircle();
         }
-        round_num += 1;
-        round.setText("Round num : "+round_num);
-        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-        progress.show();
 //        progress.dismiss();
-        //Toast.makeText(gameActivity.this, "You won the point" , Toast.LENGTH_LONG).show();
         //Toast.makeText(gameActivity.this, "opponent won the point" , Toast.LENGTH_LONG).show();
     }
 
@@ -171,11 +172,6 @@ public class gameActivity extends AppCompatActivity {
         circle_clicked_3.setImageResource(R.drawable.black_circle);
         circle_clicked_4.setImageResource(R.drawable.black_circle);
         circle_clicked_5.setImageResource(R.drawable.black_circle);
-        circle_c_1.setImageResource(R.drawable.black_circle);
-        circle_c_2.setImageResource(R.drawable.black_circle);
-        circle_c_3.setImageResource(R.drawable.black_circle);
-        circle_c_4.setImageResource(R.drawable.black_circle);
-        circle_c_5.setImageResource(R.drawable.black_circle);
         select_color = new ArrayList<String>();
         circle_1.setEnabled(true);
         circle_2.setEnabled(true);
