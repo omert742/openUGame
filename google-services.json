@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "550580272651",
+    "firebase_url": "https://openuproject-25c40-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "openuproject-25c40",
+    "storage_bucket": "openuproject-25c40.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:550580272651:android:81fd8f3684f76a1be3110e",
+        "android_client_info": {
+          "package_name": "com.example.openugame"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "550580272651-17ju8bf2mtoafu14b5dci003qluvgnrc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-VYM9-biYeKYgjzQ8ZaHgX9mJEIPp1WM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "550580272651-17ju8bf2mtoafu14b5dci003qluvgnrc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
