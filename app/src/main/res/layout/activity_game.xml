@@ -103,11 +103,11 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/test232"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/card_r"
-            android:textSize="20dp"
+            android:textSize="20sp"
             tools:layout_editor_absoluteX="33dp"
             tools:layout_editor_absoluteY="5dp" />
 
@@ -191,93 +191,58 @@
         android:layout_toRightOf="@id/finishBtn"
         android:orientation="vertical">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="156dp"
-            android:layout_height="74dp"
-            android:layout_toRightOf="@id/finishBtn"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/textView"
-                android:layout_width="40dp"
-                android:layout_height="30dp"
-                android:gravity="center"
-                android:text="0"
-                android:textSize="20dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <TextView
-                android:id="@+id/textView2"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/my_point"
-                android:textSize="20sp"
+                android:orientation="horizontal">
 
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                <TextView
+                    android:id="@+id/my_score"
+                    android:layout_width="40dp"
+                    android:layout_height="30dp"
+                    android:gravity="center"
+                    android:text="@string/zero"
+                    android:textSize="20dp" />
 
-            <TextView
-                android:id="@+id/my_score"
-                android:layout_width="40dp"
-                android:layout_height="30dp"
-                android:gravity="center"
-                android:text="@string/zero"
-                android:textSize="20dp"
-                tools:layout_editor_absoluteX="0dp"
-                tools:layout_editor_absoluteY="0dp" />
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/my_point"
+                    android:textSize="20sp"
 
-            <TextView
-                android:id="@+id/apo_score"
-                android:layout_width="wrap_content"
+                    />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/opo_scor"
-                android:textSize="20dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                android:orientation="horizontal">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/test22"
+                    android:layout_width="40dp"
+                    android:layout_height="30dp"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textSize="20dp" />
 
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="40dp"
-            android:layout_height="30dp"
-            android:gravity="center"
-            android:text="0"
-            android:textSize="20dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+                <TextView
+                    android:id="@+id/apo_score"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/opo_scor"
+                    android:textSize="20dp" />
 
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/my_point"
-            android:textSize="20sp"
+            </LinearLayout>
 
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/my_score"
-            android:layout_width="40dp"
-            android:layout_height="30dp"
-            android:gravity="center"
-            android:text="@string/zero"
-            android:textSize="20dp"
-            tools:layout_editor_absoluteX="0dp"
-            tools:layout_editor_absoluteY="0dp" />
-
-        <TextView
-            android:id="@+id/apo_score"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/opo_scor"
-            android:textSize="20dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
