@@ -1,16 +1,15 @@
-package com.example.openugame;
+package com.example.openugame.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
-import android.media.Image;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.openugame.R;
 
 import java.util.ArrayList;
 import java.util.Arrays;
