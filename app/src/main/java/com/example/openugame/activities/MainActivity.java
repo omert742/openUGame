@@ -79,14 +79,6 @@ public class MainActivity extends AppCompatActivity {
 
         TextInputEditText playerName = findViewById(R.id.playerName);
         Button connectButton = findViewById(R.id.button);
-        goToGame.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent myIntent = new Intent( MainActivity.this, GameActivity.class);
-                myIntent.putExtra("name", "omer"); //Optional parameters
-                MainActivity.this.startActivity(myIntent);
-            }
-        });
         playerName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
