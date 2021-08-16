@@ -35,6 +35,9 @@ import com.google.firebase.functions.HttpsCallableResult;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.example.openugame.listeners.MessageListener.MESSAGE_KEY;
+import static com.example.openugame.listeners.MessageListener.START_GAME_ACTION;
+
 public class MainActivity extends AppCompatActivity {
     private Player player;
 
@@ -43,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
-                new IntentFilter("MyData")
+                new IntentFilter(START_GAME_ACTION)
         );
         setContentView(R.layout.activity_main);
 
@@ -75,15 +78,7 @@ public class MainActivity extends AppCompatActivity {
 
         TextInputEditText playerName = findViewById(R.id.playerName);
         Button connectButton = findViewById(R.id.button);
-        Button goToGame = findViewById(R.id.gotogame);
-        goToGame.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent myIntent = new Intent( MainActivity.this, GameActivity.class);
-                myIntent.putExtra("name", "omer"); //Optional parameters
-                MainActivity.this.startActivity(myIntent);
-            }
-        });
+
         playerName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -152,8 +147,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mMessageReceiver, new IntentFilter(START_GAME_ACTION));
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
+        unregisterReceiver(mMessageReceiver);
         if (this.player != null) {
             // TODO: remove player from waiting list
         }
@@ -162,7 +164,15 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i("Gal", "Message received");
+            try {
+                intent.getExtras().get(MESSAGE_KEY);
+                Intent myIntent = new Intent(MainActivity.this, GameActivity.class);
+                myIntent.putExtra(MESSAGE_KEY, intent.getExtras().get(MESSAGE_KEY).toString());
+                MainActivity.this.startActivity(myIntent);
+            }
+            catch (Exception e){
+                //TODO : error message
+            }
         }
     };
 }

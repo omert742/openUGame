@@ -3,6 +3,7 @@ package com.example.openugame.activities;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -16,6 +17,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.example.openugame.listeners.MessageListener.MESSAGE_KEY;
+
 public class GameActivity extends AppCompatActivity {
 
     public ImageView circle_1, circle_2, circle_3, circle_4, circle_5, circle_c_1, circle_c_2, circle_c_3, circle_c_4, circle_c_5, circle_clicked_1, circle_clicked_2, circle_clicked_3, circle_clicked_4, circle_clicked_5, finishBtn;
@@ -27,13 +30,19 @@ public class GameActivity extends AppCompatActivity {
     public long startTime = 0;
     public int round_num = 0;
 
+    private String gameID;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         getSupportActionBar().hide();
         setContentView(R.layout.activity_game);
         initObjects();
         randomCircles();
+
+        Intent intent = getIntent();
+        this.gameID = intent.getStringArrayExtra(MESSAGE_KEY).toString();
     }
     @Override
     public void onBackPressed () {

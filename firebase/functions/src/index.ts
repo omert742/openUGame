@@ -9,6 +9,13 @@ admin.initializeApp();
 const MIN_PLAYER_NAME = 3;
 const AMOUNT_OF_PLAYERS_IN_GAME = 2;
 
+interface Game {
+  currentTurn: number;
+  player1ID: string;
+  player2ID: string;
+  turns: string[];
+}
+
 interface Player {
   name: string;
   id: string;
@@ -24,6 +31,42 @@ interface MessageData {
   value: string;
 }
 
+
+/**
+ * Firebase exported function
+ * Called when a player completed his turn successfully
+ */
+exports.sendScore = functions.https.onCall((data: any, context: CallableContext) => {
+  const gameID = data?.gameID;
+  const turn = data?.turn;
+
+  if (!gameID) {
+    throw new functions.https.HttpsError("invalid-argument", "No game id provided");
+  }
+  if (!turn) {
+    throw new functions.https.HttpsError("invalid-argument", "No turn provided");
+  }
+
+  admin.database().ref("/players").child(gameID).once("value").then((snapshot: DataSnapshot) => {
+    const dbRef = snapshot.ref;
+    const game: Game = <Game> snapshot.toJSON();
+    const currentTurn = game.currentTurn;
+    const updates: any = {};
+    if (currentTurn && turn == currentTurn && !turn[currentTurn]) {
+      updates[currentTurn] = context.instanceIdToken;
+      updates["currentTurn"] = currentTurn + 1;
+      dbRef.update(updates);
+
+      const payload = {
+        data: {
+          action: "OPPONENT_DONE",
+          value: context.instanceIdToken?.toString?.() || "",
+        },
+      };
+      sendMessageToDevice([game.player1ID, game.player2ID], payload);
+    }
+  });
+});
 /**
  * Firebase exported function
  * when a player wants to start a game he would call this function which would add him to the waiting list
@@ -103,9 +146,9 @@ const startMatchMaking = async (players: Player[]) => {
     updates[`players/${players[i].id}`] = null;
 
     // setup game values
-    updates[`games/${gameID}/gameID`] = gameID;
     updates[`games/${gameID}/player${i+1}ID`] = players[i].id;
   }
+  updates[`games/${gameID}/currentTurn`] = 1;
 
   try {
     functions.logger.info("Update database values");
