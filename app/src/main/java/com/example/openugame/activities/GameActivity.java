@@ -1,21 +1,31 @@
 package com.example.openugame.activities;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.openugame.R;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.FirebaseFunctionsException;
+import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.example.openugame.listeners.MessageListener.MESSAGE_KEY;
 
@@ -139,6 +149,30 @@ public class GameActivity extends AppCompatActivity {
             round.setText("Round num : "+round_num);
             progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
             progress.show();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("gameID", this.gameID);
+            data.put("turn", 1);
+            FirebaseFunctions.getInstance().getHttpsCallable("sendScore")
+                    .call(data)
+                    .continueWith(new Continuation<HttpsCallableResult, String>() {
+                        @Override
+                        public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                            //HashMap result = (HashMap) task.getResult().getData();
+                            return "";
+                        }
+                    }).addOnCompleteListener(new OnCompleteListener<String>() {
+                @Override
+                public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<String> task) {
+                    if (task.isSuccessful()) {
+                        // TODO: sent score successfully
+                        Log.i("Gal","Score was sent");
+                    } else {
+                        //TODO: failed to send score
+                    }
+
+                }
+            });
         }else{
             Toast.makeText(GameActivity.this, "Seems you've been wrong..." , Toast.LENGTH_LONG).show();
             resetAllCircle();

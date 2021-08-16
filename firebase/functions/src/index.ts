@@ -52,8 +52,8 @@ exports.sendScore = functions.https.onCall((data: any, context: CallableContext)
     const game: Game = <Game> snapshot.toJSON();
     const currentTurn = game.currentTurn;
     const updates: any = {};
-    if (currentTurn && turn == currentTurn && !turn[currentTurn]) {
-      updates[currentTurn] = context.instanceIdToken;
+    if (currentTurn && turn == currentTurn && !game.turns[currentTurn]) {
+      updates[`turns/${currentTurn}`] = context.instanceIdToken;
       updates["currentTurn"] = currentTurn + 1;
       dbRef.update(updates);
 
