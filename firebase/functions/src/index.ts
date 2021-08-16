@@ -15,6 +15,15 @@ interface Player {
   lastUpdate: number;
 }
 
+interface MessagePayload {
+  data: MessageData;
+}
+
+interface MessageData {
+  action: string;
+  value: string;
+}
+
 /**
  * Firebase exported function
  * when a player wants to start a game he would call this function which would add him to the waiting list
@@ -109,17 +118,30 @@ const startMatchMaking = async (players: Player[]) => {
   try {
     // Notification details.
     const payload = {
-      notification: {
-        title: "START_GAME",
-        body: "",
+      data: {
+        action: "START_GAME",
+        value: gameID,
       },
     };
 
     // send notification to players
     functions.logger.info("Send notification to players");
-    await admin.messaging().sendToDevice(playerDeviceIDS, payload);
+    await sendMessageToDevice(playerDeviceIDS, payload);
     functions.logger.info("Notification sent to players");
   } catch (error) {
     functions.logger.error("Failed to send notification for players", error);
   }
+};
+
+
+/**
+ * Sends message to given device id's
+ * @param {string[]} deviceIDs The devices we want to send message to
+ * @param {string} payload The payload we want to send
+ */
+const sendMessageToDevice = async (deviceIDs: string[], payload: MessagePayload) => {
+  await admin.messaging().sendToDevice(deviceIDs, payload, {
+    timeToLive: 1, // keep message alive only for 1 minute
+    priority: "high",
+  });
 };

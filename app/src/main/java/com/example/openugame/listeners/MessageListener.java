@@ -2,10 +2,9 @@ package com.example.openugame.listeners;
 
 import android.util.Log;
 
+import com.example.openugame.activities.MainActivity;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MessageListener extends FirebaseMessagingService {
 
@@ -18,6 +17,7 @@ public class MessageListener extends FirebaseMessagingService {
             switch (remoteMessage.getNotification().getTitle()) {
                 case "START_GAME":
                     //TODO start game activity
+                    MainActivity.startGame("test");
                     Log.i("Gal", "Should start game");
                     break;
 

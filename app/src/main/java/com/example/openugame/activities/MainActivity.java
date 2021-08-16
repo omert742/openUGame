@@ -23,7 +23,6 @@ import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.functions.FirebaseFunctionsException;
@@ -33,7 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    private DatabaseReference playersDatabaseRef;
     private Player player;
 
     @Override
@@ -65,16 +63,15 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
-        ;
 
 
         TextInputEditText playerName = findViewById(R.id.playerName);
         Button connectButton = findViewById(R.id.button);
-        Button goToGame = findViewById(R.id.button);
+        Button goToGame = findViewById(R.id.gotogame);
         goToGame.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent myIntent = new Intent( MainActivity.this, gameActivity.class);
+                Intent myIntent = new Intent( MainActivity.this, GameActivity.class);
                 myIntent.putExtra("name", "omer"); //Optional parameters
                 MainActivity.this.startActivity(myIntent);
             }
@@ -115,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
                                 //TODO: waiting screen (waiting for message to be sent)
-                                HashMap result = (HashMap) task.getResult().getData();
+                                //HashMap result = (HashMap) task.getResult().getData();
                                 return "";
                             }
                         }).addOnCompleteListener(new OnCompleteListener<String>() {
@@ -152,5 +149,8 @@ public class MainActivity extends AppCompatActivity {
         if (this.player != null) {
             // TODO: remove player from waiting list
         }
+    }
+
+    public static void startGame(String gameID) {
     }
 }

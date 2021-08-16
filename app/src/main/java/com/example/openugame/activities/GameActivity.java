@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class gameActivity extends AppCompatActivity {
+public class GameActivity extends AppCompatActivity {
 
     public ImageView circle_1, circle_2, circle_3, circle_4, circle_5, circle_c_1, circle_c_2, circle_c_3, circle_c_4, circle_c_5, circle_clicked_1, circle_clicked_2, circle_clicked_3, circle_clicked_4, circle_clicked_5, finishBtn;
     public TextView my_score, apo_score,round;
@@ -34,6 +34,11 @@ public class gameActivity extends AppCompatActivity {
         setContentView(R.layout.activity_game);
         initObjects();
         randomCircles();
+    }
+    @Override
+    public void onBackPressed () {
+        // disable back button press
+        return;
     }
 
     public void initObjects(){
@@ -126,7 +131,7 @@ public class gameActivity extends AppCompatActivity {
             progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
             progress.show();
         }else{
-            Toast.makeText(gameActivity.this, "Seems you've been wrong..." , Toast.LENGTH_LONG).show();
+            Toast.makeText(GameActivity.this, "Seems you've been wrong..." , Toast.LENGTH_LONG).show();
             resetAllCircle();
         }
 //        progress.dismiss();
