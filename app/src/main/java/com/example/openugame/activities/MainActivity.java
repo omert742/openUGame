@@ -1,9 +1,6 @@
 package com.example.openugame.activities;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +11,10 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.openugame.R;
 import com.example.openugame.utils.Player;
@@ -40,6 +41,7 @@ import static com.example.openugame.listeners.MessageListener.START_GAME_ACTION;
 
 public class MainActivity extends AppCompatActivity {
     private Player player;
+    public ProgressDialog progress = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,24 +59,26 @@ public class MainActivity extends AppCompatActivity {
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         database.setPersistenceEnabled(false);
-
+        progress = new ProgressDialog(this);
+        progress.setTitle("Loading");
+        progress.setMessage("Firebase authentication...");
+        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+        progress.show();
         //Authenticate
         FirebaseAuth.getInstance().signInAnonymously()
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        //TODO : need to add loading screen until authenticated otherwise will get an error when trying to call firebase function
+                        progress.dismiss();
                         if (task.isSuccessful()) {
-
-                            // Sign in success, update UI with the signed-in user's information
                             Log.d("Gal", "signInAnonymously:success");
                         } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w("Gal", "signInAnonymously:failure", task.getException());
+                            progress.setMessage("Failed to do firebase authentication...");
+                            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+                            progress.show();
                         }
                     }
                 });
-
 
         TextInputEditText playerName = findViewById(R.id.playerName);
         Button connectButton = findViewById(R.id.button);
@@ -114,20 +118,20 @@ public class MainActivity extends AppCompatActivity {
                         .continueWith(new Continuation<HttpsCallableResult, String>() {
                             @Override
                             public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                                //TODO: waiting screen (waiting for message to be sent)
                                 //HashMap result = (HashMap) task.getResult().getData();
                                 return "";
                             }
                         }).addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
                     public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<String> task) {
-                        Log.i("Gal", "Sent message");
                         if (task.isSuccessful()) {
-                            //TODO: waiting screen (message sent successfully, waiting for another player)
-                            Log.i("Gal", "Successfully");
+                            progress.setMessage("Waiting for opponent...");
+                            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+                            progress.show();
                         } else {
-                            //TODO: error screen
-                            Log.i("Gal", "Unsuccessfully");
+                            progress.setMessage("Failed to do be added to waiting list ...");
+                            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+                            progress.show();
                             Exception e = task.getException();
                             if (e instanceof FirebaseFunctionsException) {
                                 FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
