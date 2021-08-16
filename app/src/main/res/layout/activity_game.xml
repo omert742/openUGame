@@ -13,6 +13,7 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:text="Round 1"
+        android:textColor="#FFFFFF"
         android:textSize="20dp" />
 
     <LinearLayout
@@ -30,6 +31,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="הקלף שלי:"
+            android:textColor="#FFFFFF"
             android:textSize="20sp" />
 
         <ImageView
@@ -107,6 +109,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/card_r"
+            android:textColor="#FFFFFF"
             android:textSize="20sp"
             tools:layout_editor_absoluteX="33dp"
             tools:layout_editor_absoluteY="5dp" />
@@ -207,6 +210,7 @@
                     android:layout_height="30dp"
                     android:gravity="center"
                     android:text="@string/zero"
+                    android:textColor="#FFFFFF"
                     android:textSize="20dp" />
 
                 <TextView
@@ -214,9 +218,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/my_point"
-                    android:textSize="20sp"
+                    android:textColor="#FFFFFF"
 
-                    />
+                    android:textSize="20sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -230,6 +234,7 @@
                     android:layout_height="30dp"
                     android:gravity="center"
                     android:text="0"
+                    android:textColor="#FFFFFF"
                     android:textSize="20dp" />
 
                 <TextView
@@ -238,6 +243,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="@string/opo_scor"
+                    android:textColor="#FFFFFF"
                     android:textSize="20dp" />
 
             </LinearLayout>
@@ -254,7 +260,6 @@
         android:layout_marginTop="20dp"
         android:clickable="true"
         android:contentDescription="@android:string/ok"
-        app:srcCompat="@drawable/done"
         tools:layout_editor_absoluteX="479dp"
         tools:layout_editor_absoluteY="82dp" />
 
