@@ -9,39 +9,45 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.openugame.R;
 import com.example.openugame.utils.Player;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.functions.FirebaseFunctions;
-import com.google.firebase.functions.FirebaseFunctionsException;
-import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
-import static com.example.openugame.listeners.MessageListener.MESSAGE_KEY;
+import static com.example.openugame.listeners.MessageListener.VALUE_KEY;
 import static com.example.openugame.listeners.MessageListener.START_GAME_ACTION;
 
 public class MainActivity extends AppCompatActivity {
-    private Player player;
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            try {
+                intent.getExtras().get(VALUE_KEY);
+                Intent myIntent = new Intent(MainActivity.this, GameActivity.class);
+                myIntent.putExtra(VALUE_KEY, intent.getExtras().get(VALUE_KEY).toString());
+                MainActivity.this.startActivity(myIntent);
+            } catch (Exception e) {
+                //TODO : error message
+            }
+        }
+    };
     public ProgressDialog progress = null;
+    private Player player;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,17 +72,14 @@ public class MainActivity extends AppCompatActivity {
         progress.show();
         //Authenticate
         FirebaseAuth.getInstance().signInAnonymously()
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        progress.dismiss();
-                        if (task.isSuccessful()) {
-                            Log.d("Gal", "signInAnonymously:success");
-                        } else {
-                            progress.setMessage("Failed to do firebase authentication...");
-                            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-                            progress.show();
-                        }
+                .addOnCompleteListener(this, task -> {
+                    progress.dismiss();
+                    if (task.isSuccessful()) {
+                        Log.d("Gal", "signInAnonymously:success");
+                    } else {
+                        progress.setMessage("Failed to do firebase authentication...");
+                        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+                        progress.show();
                     }
                 });
 
@@ -101,50 +104,43 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        connectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try {
-                    player = new Player(playerName.getText().toString());
-                } catch (Exception e) {
-                    connectButton.setEnabled(false);
-                    ((TextInputLayout) findViewById(R.id.textInputLayout)).setError("Invalid name");
-                }
+        connectButton.setOnClickListener(view -> {
+            connectButton.setEnabled(false);
+            progress.setMessage("Sending player data to server...");
+            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+            progress.show();
 
-                Map<String, Object> data = new HashMap<>();
-                data.put("name", player.getName());
-                FirebaseFunctions.getInstance().getHttpsCallable("addPlayerToWaitingList")
-                        .call(data)
-                        .continueWith(new Continuation<HttpsCallableResult, String>() {
-                            @Override
-                            public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                                //HashMap result = (HashMap) task.getResult().getData();
-                                return "";
-                            }
-                        }).addOnCompleteListener(new OnCompleteListener<String>() {
-                    @Override
-                    public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<String> task) {
+            try {
+                player = new Player(Objects.requireNonNull(playerName.getText()).toString());
+            } catch (Exception e) {
+                ((TextInputLayout) findViewById(R.id.textInputLayout)).setError("Invalid name");
+                return;
+            }
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("name", player.getName());
+            FirebaseFunctions.getInstance().getHttpsCallable("addPlayerToWaitingList")
+                    .call(data)
+                    .continueWith(task -> {
+                        Log.i("Gal", " Continue with then async");
+
+                        progress.setMessage("Waiting for opponent...");
+                        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+                        progress.show();
+                        return "";
+                    }).addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            progress.setMessage("Waiting for opponent...");
-                            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-                            progress.show();
+                            Log.i("Gal", "Message sent successfully");
                         } else {
+                            Log.i("Gal", "Message failed");
                             progress.setMessage("Failed to do be added to waiting list ...");
                             progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
                             progress.show();
-                            Exception e = task.getException();
-                            if (e instanceof FirebaseFunctionsException) {
-                                FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
-                                FirebaseFunctionsException.Code code = ffe.getCode();
-                                Object details = ffe.getDetails();
-                            }
                         }
 
-                    }
-                });
+                    });
 
 
-            }
         });
 
 
@@ -160,23 +156,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(mMessageReceiver);
-        if (this.player != null) {
-            // TODO: remove player from waiting list
-        }
+        // TODO: remove player from waiting list
     }
-
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            try {
-                intent.getExtras().get(MESSAGE_KEY);
-                Intent myIntent = new Intent(MainActivity.this, GameActivity.class);
-                myIntent.putExtra(MESSAGE_KEY, intent.getExtras().get(MESSAGE_KEY).toString());
-                MainActivity.this.startActivity(myIntent);
-            }
-            catch (Exception e){
-                //TODO : error message
-            }
-        }
-    };
 }

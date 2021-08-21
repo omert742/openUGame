@@ -11,8 +11,8 @@ const AMOUNT_OF_PLAYERS_IN_GAME = 2;
 
 interface Game {
   currentTurn: number;
-  player1ID: string;
-  player2ID: string;
+  player1: Player;
+  player2: Player;
   turns: string[];
 }
 
@@ -47,23 +47,32 @@ exports.sendScore = functions.https.onCall((data: any, context: CallableContext)
     throw new functions.https.HttpsError("invalid-argument", "No turn provided");
   }
 
-  admin.database().ref("/players").child(gameID).once("value").then((snapshot: DataSnapshot) => {
+  console.log(`Looking into '${gameID}' with turn ${turn}`);
+
+  admin.database().ref("/games").child(gameID).once("value").then((snapshot: DataSnapshot) => {
     const dbRef = snapshot.ref;
     const game: Game = <Game> snapshot.toJSON();
     const currentTurn = game.currentTurn;
+
     const updates: any = {};
-    if (currentTurn && turn == currentTurn && !game.turns[currentTurn]) {
+    if (currentTurn && turn == currentTurn && !game.turns?.[currentTurn]) {
+      console.log("Updating game values");
       updates[`turns/${currentTurn}`] = context.instanceIdToken;
       updates["currentTurn"] = currentTurn + 1;
-      dbRef.update(updates);
-
-      const payload = {
-        data: {
-          action: "OPPONENT_DONE",
-          value: context.instanceIdToken?.toString?.() || "",
-        },
-      };
-      sendMessageToDevice([game.player1ID, game.player2ID], payload);
+      dbRef.update(updates).then(() => {
+        console.log("Updated game value, sending message to players");
+        const payload = {
+          data: {
+            action: "NEXT_TURN",
+            value: context.instanceIdToken?.toString?.() || "",
+          },
+        };
+        sendMessageToDevice([game.player1.id, game.player2.id], payload).then(() => {
+          console.log("Message sent to players");
+        });
+      });
+    } else {
+      console.log("Received a score that isn't relevant");
     }
   });
 });
@@ -146,7 +155,7 @@ const startMatchMaking = async (players: Player[]) => {
     updates[`players/${players[i].id}`] = null;
 
     // setup game values
-    updates[`games/${gameID}/player${i+1}ID`] = players[i].id;
+    updates[`games/${gameID}/player${i+1}`] = players[i];
   }
   updates[`games/${gameID}/currentTurn`] = 1;
 
@@ -184,7 +193,7 @@ const startMatchMaking = async (players: Player[]) => {
  */
 const sendMessageToDevice = async (deviceIDs: string[], payload: MessagePayload) => {
   await admin.messaging().sendToDevice(deviceIDs, payload, {
-    timeToLive: 1, // keep message alive only for 1 minute
+    timeToLive: 60, // keep message alive only for 1 minute
     priority: "high",
   });
 };

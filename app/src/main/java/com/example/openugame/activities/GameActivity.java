@@ -1,24 +1,22 @@
 package com.example.openugame.activities;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.openugame.R;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.example.openugame.listeners.MessageListener;
 import com.google.firebase.functions.FirebaseFunctions;
-import com.google.firebase.functions.FirebaseFunctionsException;
-import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,162 +24,187 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import static com.example.openugame.listeners.MessageListener.MESSAGE_KEY;
+import static com.example.openugame.listeners.MessageListener.NEXT_TURN_ACTION;
+import static com.example.openugame.listeners.MessageListener.VALUE_KEY;
 
 public class GameActivity extends AppCompatActivity {
 
-    public ImageView circle_1, circle_2, circle_3, circle_4, circle_5, circle_c_1, circle_c_2, circle_c_3, circle_c_4, circle_c_5, circle_clicked_1, circle_clicked_2, circle_clicked_3, circle_clicked_4, circle_clicked_5, finishBtn;
-    public TextView my_score, apo_score,round;
+    public ImageView circle_1, circle_2, circle_3, circle_4, circle_5, circle_c_1, circle_c_2, circle_c_3, circle_c_4, circle_c_5, circle_clicked_1, circle_clicked_2, circle_clicked_3, circle_clicked_4, circle_clicked_5;
+    public TextView my_score_view, opo_score_view, round_value_view;
     public List<String> colors = Arrays.asList("green", "gray", "blue", "red", "yellow");
-    public List<String> select_color = new ArrayList<String>();
-    public ArrayList<ImageView> clicked_images = new ArrayList<ImageView>();
+    public List<String> select_color = new ArrayList<>();
+    public ArrayList<ImageView> clicked_images = new ArrayList<>();
     public ProgressDialog progress = null;
     public long startTime = 0;
-    public int round_num = 0;
-
+    public int round_num = 1;
+    public int my_score = 0;
+    public int opponent_score = 0;
     private String gameID;
+
+
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            try {
+                // check if winning token equals to current player
+                String winner_token = intent.getExtras().get(VALUE_KEY).toString();
+                GameActivity.this.newTurn(winner_token.equals(MessageListener.token));
+
+            } catch (Exception e) {
+                //TODO : error message
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
-        getSupportActionBar().hide();
+        Log.i("Gal", "Starting game activity");
+        LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
+                new IntentFilter(NEXT_TURN_ACTION)
+        );
+
+        Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_game);
         initObjects();
         randomCircles();
 
         Intent intent = getIntent();
-        this.gameID = intent.getStringArrayExtra(MESSAGE_KEY).toString();
-    }
-    @Override
-    public void onBackPressed () {
-        // disable back button press
-        return;
+        this.gameID = intent.getStringExtra(VALUE_KEY);
     }
 
-    public void initObjects(){
-        circle_1 = (ImageView) findViewById(R.id.circle_1);
-        circle_2 = (ImageView) findViewById(R.id.circle_2);
-        circle_3 = (ImageView) findViewById(R.id.circle_3);
-        circle_4 = (ImageView) findViewById(R.id.circle_4);
-        circle_5 = (ImageView) findViewById(R.id.circle_5);
-        circle_c_1 = (ImageView) findViewById(R.id.circle_c_1);
-        circle_c_2 = (ImageView) findViewById(R.id.circle_c_2);
-        circle_c_3 = (ImageView) findViewById(R.id.circle_c_3);
-        circle_c_4 = (ImageView) findViewById(R.id.circle_c_4);
-        circle_c_5 = (ImageView) findViewById(R.id.circle_c_5);
-        circle_clicked_1 = (ImageView) findViewById(R.id.circle_clicked_1);
-        circle_clicked_2 = (ImageView) findViewById(R.id.circle_clicked_2);
-        circle_clicked_3 = (ImageView) findViewById(R.id.circle_clicked_3);
-        circle_clicked_4 = (ImageView) findViewById(R.id.circle_clicked_4);
-        circle_clicked_5 = (ImageView) findViewById(R.id.circle_clicked_5);
+    /**
+     * Set up a new turn and update UI parameters
+     * @param i_won True if current user won
+     */
+    private void newTurn(Boolean i_won) {
+        resetAllCircle();
+        randomCircles();
+
+        round_num += 1;
+        round_value_view.setText(String.valueOf(GameActivity.this.round_num));
+        progress.cancel();
+
+        if (i_won) {
+            my_score++;
+        } else {
+            opponent_score++;
+        }
+        my_score_view.setText(String.valueOf(GameActivity.this.my_score));
+        opo_score_view.setText(String.valueOf(GameActivity.this.opponent_score));
+    }
+
+    @Override
+    public void onBackPressed() {
+        // disable back button press
+    }
+
+    public void initObjects() {
+        circle_1 = findViewById(R.id.circle_1);
+        circle_2 = findViewById(R.id.circle_2);
+        circle_3 = findViewById(R.id.circle_3);
+        circle_4 = findViewById(R.id.circle_4);
+        circle_5 = findViewById(R.id.circle_5);
+        circle_c_1 = findViewById(R.id.circle_c_1);
+        circle_c_2 = findViewById(R.id.circle_c_2);
+        circle_c_3 = findViewById(R.id.circle_c_3);
+        circle_c_4 = findViewById(R.id.circle_c_4);
+        circle_c_5 = findViewById(R.id.circle_c_5);
+        circle_clicked_1 = findViewById(R.id.circle_clicked_1);
+        circle_clicked_2 = findViewById(R.id.circle_clicked_2);
+        circle_clicked_3 = findViewById(R.id.circle_clicked_3);
+        circle_clicked_4 = findViewById(R.id.circle_clicked_4);
+        circle_clicked_5 = findViewById(R.id.circle_clicked_5);
         clicked_images.add(circle_clicked_5);
         clicked_images.add(circle_clicked_4);
         clicked_images.add(circle_clicked_3);
         clicked_images.add(circle_clicked_2);
         clicked_images.add(circle_clicked_1);
-        my_score = (TextView) findViewById(R.id.my_score);
         progress = new ProgressDialog(this);
         progress.setTitle("Loading");
-        round = (TextView) findViewById(R.id.round);
-        apo_score = (TextView) findViewById(R.id.apo_score);
-        finishBtn = (ImageView) findViewById(R.id.finishBtn);
-        finishBtn.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                resetAllCircle();
-                randomCircles();
-            }
-        });
+        round_value_view = findViewById(R.id.round_value);
+        my_score_view = findViewById(R.id.my_score);
+        opo_score_view = findViewById(R.id.opo_score);
+
         String yellow_color = "yellow";
         String red_color = "red";
         String blue_color = "blue";
         String gray_color = "gray";
         String green_color = "green";
-        circle_5.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                circle_5.setEnabled(false);
-                showMySelected(red_color, clicked_images.get(0));
-            }
+        circle_5.setOnClickListener(v -> {
+            circle_5.setEnabled(false);
+            showMySelected(red_color, clicked_images.get(0));
         });
-        circle_4.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                circle_4.setEnabled(false);
-                showMySelected(yellow_color, clicked_images.get(0));
-            }
+        circle_4.setOnClickListener(v -> {
+            circle_4.setEnabled(false);
+            showMySelected(yellow_color, clicked_images.get(0));
         });
-        circle_3.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                circle_3.setEnabled(false);
-                showMySelected(blue_color, clicked_images.get(0));
-            }
+        circle_3.setOnClickListener(v -> {
+            circle_3.setEnabled(false);
+            showMySelected(blue_color, clicked_images.get(0));
         });
-        circle_2.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                circle_2.setEnabled(false);
-                showMySelected(gray_color, clicked_images.get(0));
-            }
+        circle_2.setOnClickListener(v -> {
+            circle_2.setEnabled(false);
+            showMySelected(gray_color, clicked_images.get(0));
         });
-        circle_1.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                circle_1.setEnabled(false);
-                showMySelected(green_color, clicked_images.get(0));
-            }
+        circle_1.setOnClickListener(v -> {
+            circle_1.setEnabled(false);
+            showMySelected(green_color, clicked_images.get(0));
         });
     }
 
-    public void showMySelected(String color, ImageView v1){
+    public void showMySelected(String color, ImageView v1) {
         setCircleColor(v1, color);
         select_color.add(color);
         clicked_images.remove(0);
-        if (select_color.size() == colors.size()){
+        if (select_color.size() == colors.size()) {
             finishRoundActions();
         }
     }
 
-    public void finishRoundActions(){
+    public void finishRoundActions() {
         long difference = System.currentTimeMillis() - startTime;
-        double difference_sec = difference / 1000;
+        double difference_sec = difference / 1000.0;
         Collections.reverse(select_color);
-        if (select_color.equals(colors)){
-            progress.setMessage("Perfect!!! its took you "+difference_sec+" sec...\nWaiting for the opponent result...");
-            round_num += 1;
-            round.setText("Round num : "+round_num);
+        if (select_color.equals(colors)) {
+            progress.setMessage("Perfect!!! it took you " + difference_sec + " sec...\nWaiting for the opponent result...");
             progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
             progress.show();
 
             Map<String, Object> data = new HashMap<>();
             data.put("gameID", this.gameID);
-            data.put("turn", 1);
+            data.put("turn", this.round_num);
             FirebaseFunctions.getInstance().getHttpsCallable("sendScore")
                     .call(data)
-                    .continueWith(new Continuation<HttpsCallableResult, String>() {
-                        @Override
-                        public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                            //HashMap result = (HashMap) task.getResult().getData();
-                            return "";
+                    .continueWith(task -> "").addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            // TODO: sent score successfully
+                        } else {
+                            //TODO: failed to send score
                         }
-                    }).addOnCompleteListener(new OnCompleteListener<String>() {
-                @Override
-                public void onComplete(@NonNull @org.jetbrains.annotations.NotNull Task<String> task) {
-                    if (task.isSuccessful()) {
-                        // TODO: sent score successfully
-                        Log.i("Gal","Score was sent");
-                    } else {
-                        //TODO: failed to send score
-                    }
 
-                }
-            });
-        }else{
-            Toast.makeText(GameActivity.this, "Seems you've been wrong..." , Toast.LENGTH_LONG).show();
+                    });
+        } else {
+            Toast.makeText(GameActivity.this, "Seems you've been wrong...", Toast.LENGTH_LONG).show();
             resetAllCircle();
         }
-//        progress.dismiss();
-        //Toast.makeText(gameActivity.this, "opponent won the point" , Toast.LENGTH_LONG).show();
     }
 
-    public void randomCircles(){
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mMessageReceiver, new IntentFilter(NEXT_TURN_ACTION));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mMessageReceiver);
+    }
+
+    public void randomCircles() {
         startTime = System.currentTimeMillis();
         Collections.shuffle(colors);
         setCircleColor(circle_c_1, colors.get(0));
@@ -191,7 +214,7 @@ public class GameActivity extends AppCompatActivity {
         setCircleColor(circle_c_5, colors.get(4));
     }
 
-    public void setCircleColor(ImageView circle, String color){
+    public void setCircleColor(ImageView circle, String color) {
         switch (color) {
             case "green":
                 circle.setImageResource(R.drawable.green);
@@ -213,13 +236,13 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    public void resetAllCircle(){
+    public void resetAllCircle() {
         circle_clicked_1.setImageResource(R.drawable.black_circle);
         circle_clicked_2.setImageResource(R.drawable.black_circle);
         circle_clicked_3.setImageResource(R.drawable.black_circle);
         circle_clicked_4.setImageResource(R.drawable.black_circle);
         circle_clicked_5.setImageResource(R.drawable.black_circle);
-        select_color = new ArrayList<String>();
+        select_color = new ArrayList<>();
         circle_1.setEnabled(true);
         circle_2.setEnabled(true);
         circle_3.setEnabled(true);
