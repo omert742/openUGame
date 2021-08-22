@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-    public ProgressDialog progress = null;
+    private ProgressDialog progress = null;
     private Player player;
 
     @Override
@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(mMessageReceiver);
     }
 
-    public void showDialog(String msg){
+    private void showDialog(String msg){
         AlertDialog alertDialog = null;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage(msg);

@@ -33,32 +33,17 @@ import static com.example.openugame.listeners.MessageListener.VALUE_KEY;
 
 public class GameActivity extends AppCompatActivity {
 
-    public ImageView circle_1, circle_2, circle_3, circle_4, circle_5, circle_c_1, circle_c_2, circle_c_3, circle_c_4, circle_c_5, circle_clicked_1, circle_clicked_2, circle_clicked_3, circle_clicked_4, circle_clicked_5;
-    public TextView my_score_view, opo_score_view, round_value_view;
-    public List<String> colors = Arrays.asList("green", "gray", "blue", "red", "yellow");
-    public List<String> select_color = new ArrayList<>();
-    public ArrayList<ImageView> clicked_images = new ArrayList<>();
-    public ProgressDialog progress = null;
-    public long startTime = 0;
-    public int round_num = 1;
-    public int my_score = 0;
-    public int opponent_score = 0;
+    private ImageView circle_1, circle_2, circle_3, circle_4, circle_5, circle_c_1, circle_c_2, circle_c_3, circle_c_4, circle_c_5, circle_clicked_1, circle_clicked_2, circle_clicked_3, circle_clicked_4, circle_clicked_5;
+    private TextView my_score_view, opo_score_view, round_value_view;
+    private List<String> colors = Arrays.asList("green", "gray", "blue", "red", "yellow");
+    private List<String> select_color = new ArrayList<>();
+    private ArrayList<ImageView> clicked_images = new ArrayList<>();
+    private ProgressDialog progress = null;
+    private long startTime = 0;
+    private int round_num = 1;
+    private int my_score = 0;
+    private int opponent_score = 0;
     private String gameID;
-
-
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            try {
-                // check if winning token equals to current player
-                String winner_token = intent.getExtras().get(VALUE_KEY).toString();
-                GameActivity.this.newTurn(winner_token.equals(MessageListener.token));
-
-            } catch (Exception e) {
-                showDialog("Error : "+e.toString());
-            }
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,7 +88,33 @@ public class GameActivity extends AppCompatActivity {
         // disable back button press
     }
 
-    public void initObjects() {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mMessageReceiver, new IntentFilter(NEXT_TURN_ACTION));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mMessageReceiver);
+    }
+
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            try {
+                // check if winning token equals to current player
+                String winner_token = intent.getExtras().get(VALUE_KEY).toString();
+                GameActivity.this.newTurn(winner_token.equals(MessageListener.token));
+
+            } catch (Exception e) {
+                showDialog("Error : "+e.toString());
+            }
+        }
+    };
+
+    private void initObjects() {
         circle_1 = findViewById(R.id.circle_1);
         circle_2 = findViewById(R.id.circle_2);
         circle_3 = findViewById(R.id.circle_3);
@@ -157,7 +168,7 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
-    public void showDialog(String msg){
+    private void showDialog(String msg){
         AlertDialog alertDialog = null;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage(msg);
@@ -172,7 +183,7 @@ public class GameActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
-    public void showMySelected(String color, ImageView v1) {
+    private void showMySelected(String color, ImageView v1) {
         setCircleColor(v1, color);
         select_color.add(color);
         clicked_images.remove(0);
@@ -181,7 +192,7 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    public void finishRoundActions() {
+    private void finishRoundActions() {
         long difference = System.currentTimeMillis() - startTime;
         double difference_sec = difference / 1000.0;
         Collections.reverse(select_color);
@@ -209,19 +220,7 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(mMessageReceiver, new IntentFilter(NEXT_TURN_ACTION));
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(mMessageReceiver);
-    }
-
-    public void randomCircles() {
+    private void randomCircles() {
         startTime = System.currentTimeMillis();
         Collections.shuffle(colors);
         setCircleColor(circle_c_1, colors.get(0));
@@ -231,7 +230,7 @@ public class GameActivity extends AppCompatActivity {
         setCircleColor(circle_c_5, colors.get(4));
     }
 
-    public void setCircleColor(ImageView circle, String color) {
+    private void setCircleColor(ImageView circle, String color) {
         switch (color) {
             case "green":
                 circle.setImageResource(R.drawable.green);
@@ -253,7 +252,7 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    public void resetAllCircle() {
+    private void resetAllCircle() {
         circle_clicked_1.setImageResource(R.drawable.black_circle);
         circle_clicked_2.setImageResource(R.drawable.black_circle);
         circle_clicked_3.setImageResource(R.drawable.black_circle);
