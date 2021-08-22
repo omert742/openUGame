@@ -13,13 +13,19 @@ interface Game {
   currentTurn: number;
   player1: Player;
   player2: Player;
-  turns: string[];
+  turns: Turn[];
+}
+
+interface Turn {
+  winner: string;
+
+  [key: string]: string;
 }
 
 interface Player {
   name: string;
   id: string;
-  lastUpdate: number;
+  lastUpdate: string;
 }
 
 interface MessagePayload {
@@ -31,6 +37,85 @@ interface MessageData {
   value: string;
 }
 
+/**
+ * Firebase exported function
+ * Called when a player submitted a score and waiting for opponent
+ */
+exports.checkScore = functions.https.onCall((data: any, context: CallableContext) => {
+  const gameID = data?.gameID;
+  const turn = data?.turn;
+
+  if (!gameID) {
+    throw new functions.https.HttpsError("invalid-argument", "No game id provided");
+  }
+
+  if (!turn) {
+    throw new functions.https.HttpsError("invalid-argument", "No turn provided");
+  }
+
+  admin.database().ref("/games").child(gameID).once("value").then((snapshot: DataSnapshot) => {
+    const dbRef = snapshot.ref;
+    const game: Game = <Game>snapshot.toJSON();
+    const currentTurn = game.currentTurn;
+    const updates: any = {};
+    const now = new Date().toISOString();
+
+
+    const player = findMeInGame(context.instanceIdToken, game);
+    updates[`${player}/lastUpdate`] = now;
+
+
+    const myToken = context.instanceIdToken || "";
+    // @ts-ignore
+    const opponentToken = game[findOpponentInGame(myToken, game)]?.id;
+    let winner = "";
+
+    functions.logger.log(`opponent token:  ${opponentToken}`);
+    functions.logger.log(`my token token:  ${myToken}`);
+    if (game.turns?.[currentTurn]?.winner) {
+      return;// already sent a message regarding a winner,ignore check
+    } else if (game.turns?.[currentTurn]?.[opponentToken]) {
+      const myResult = game.turns?.[currentTurn]?.[myToken];
+      const opponentResult = game.turns?.[currentTurn]?.[myToken];
+
+      functions.logger.log(`opponent result:  ${opponentResult}`);
+      functions.logger.log(`my result result:  ${myResult}`);
+
+      if (new Date(myResult) > new Date(opponentResult)) {
+        winner = opponentResult;
+      } else {
+        winner = myToken;
+      }
+    }
+
+    if (winner) {
+      updates[`turns/${currentTurn}/winner`] = winner;
+    }
+
+    updates["currentTurn"] = currentTurn + 1;
+
+    functions.logger.log("updating db values");
+    dbRef.update(updates).then(() => {
+      functions.logger.log("Updated DB values");
+
+      if (winner) {
+        const payload = {
+          data: {
+            action: "NEXT_TURN",
+            value: game.turns?.[currentTurn - 1].winner,
+          },
+        };
+
+
+        sendMessageToDevice([game.player1.id, game.player2.id], payload).then(() => {
+          functions.logger.log("Message sent to players");
+        });
+      } else {
+        functions.logger.log("waiting for both players result..");
+      }
+    });
+  });
+});
 
 /**
  * Firebase exported function
@@ -51,29 +136,33 @@ exports.sendScore = functions.https.onCall((data: any, context: CallableContext)
 
   admin.database().ref("/games").child(gameID).once("value").then((snapshot: DataSnapshot) => {
     const dbRef = snapshot.ref;
-    const game: Game = <Game> snapshot.toJSON();
+    const game: Game = <Game>snapshot.toJSON();
     const currentTurn = game.currentTurn;
 
     const updates: any = {};
-    if (currentTurn && turn == currentTurn && !game.turns?.[currentTurn]) {
-      console.log("Updating game values");
-      updates[`turns/${currentTurn}`] = context.instanceIdToken;
-      updates["currentTurn"] = currentTurn + 1;
-      dbRef.update(updates).then(() => {
-        console.log("Updated game value, sending message to players. waiting for other player result");
-      });
+    const now = new Date().toISOString();
+    let playerID: string;
+    if (game.player1.id == context.instanceIdToken) {
+      functions.logger.log("Updating player 1 last update");
+      playerID = game.player1.id;
+      updates["player1/lastUpdate"] = now;
+    } else if (game.player2.id == context.instanceIdToken) {
+      functions.logger.log("Updating player 2 last update");
+      playerID = game.player2.id;
+      updates["player2/lastUpdate"] = now;
     } else {
-      // losing players sent score, send message to both players to go to next turn
-      const payload = {
-        data: {
-          action: "NEXT_TURN",
-          value: game.turns?.[currentTurn - 1],
-        },
-      };
-      sendMessageToDevice([game.player1.id, game.player2.id], payload).then(() => {
-        console.log("Message sent to players");
-      });
+      throw new functions.https.HttpsError("invalid-argument", "Failed to find player in game " + gameID);
     }
+
+    if (currentTurn && turn == currentTurn && !game.turns?.[currentTurn]?.[playerID]) {
+      functions.logger.log("Updating game values");
+      updates[`turns/${currentTurn}/${playerID}`] = now;
+    }
+
+    functions.logger.log("updating db values");
+    dbRef.update(updates).then(() => {
+      functions.logger.log(`Updated game ${gameID} turn ${turn} and player ${playerID} with a score`);
+    });
   });
 });
 /**
@@ -96,7 +185,7 @@ exports.addPlayerToWaitingList = functions.https.onCall((data: any, context: Cal
   return admin.database().ref("/players").child(context.instanceIdToken).set({
     "name": name,
     "id": context.instanceIdToken,
-    "lastUpdate": new Date().getTime(),
+    "lastUpdate": new Date().toISOString(),
   } as Player)
       .then(() => {
         functions.logger.log(`Player '${name}' was added to waiting list`);
@@ -104,7 +193,7 @@ exports.addPlayerToWaitingList = functions.https.onCall((data: any, context: Cal
         return;
       })
       .catch((error: any) => {
-        // Re-throwing the error as an HttpsError so that the client gets the error details.
+      // Re-throwing the error as an HttpsError so that the client gets the error details.
         throw new functions.https.HttpsError("unknown", error.message, error);
       });
 });
@@ -112,7 +201,7 @@ exports.addPlayerToWaitingList = functions.https.onCall((data: any, context: Cal
 /**
  * Checks if we can start a game between 2 players
  */
-const checkMatchMaking = () : void => {
+const checkMatchMaking = (): void => {
   functions.logger.log("Checking for match making...");
 
   admin.database().ref("/players").orderByChild("lastUpdate").limitToFirst(AMOUNT_OF_PLAYERS_IN_GAME).once("value")
@@ -155,7 +244,7 @@ const startMatchMaking = async (players: Player[]) => {
     updates[`players/${players[i].id}`] = null;
 
     // setup game values
-    updates[`games/${gameID}/player${i+1}`] = players[i];
+    updates[`games/${gameID}/player${i + 1}`] = players[i];
   }
   updates[`games/${gameID}/currentTurn`] = 1;
 
@@ -196,4 +285,33 @@ const sendMessageToDevice = async (deviceIDs: string[], payload: MessagePayload)
     timeToLive: 60, // keep message alive only for 1 minute
     priority: "high",
   });
+};
+
+
+const findMeInGame = (playerID: string | undefined, game: Game): string => {
+  if (!playerID) {
+    throw new functions.https.HttpsError("invalid-argument", "no player id provided");
+  }
+  switch (playerID) {
+    case game.player1.id:
+      return "player1";
+    case game.player2.id:
+      return "player2";
+    default:
+      throw new functions.https.HttpsError("invalid-argument", "player wasn't found in the game");
+  }
+};
+
+const findOpponentInGame = (myPlayerID: string | undefined, game: Game): string => {
+  if (!myPlayerID) {
+    throw new functions.https.HttpsError("invalid-argument", "no player id provided");
+  }
+  switch (myPlayerID) {
+    case game.player1.id:
+      return "player2";
+    case game.player2.id:
+      return "player1";
+    default:
+      throw new functions.https.HttpsError("invalid-argument", "player wasn't found in the game");
+  }
 };
