@@ -36,7 +36,7 @@ public class GameActivity extends AppCompatActivity {
 
     private ImageView circle_1, circle_2, circle_3, circle_4, circle_5, circle_c_1, circle_c_2, circle_c_3, circle_c_4, circle_c_5, circle_clicked_1, circle_clicked_2, circle_clicked_3, circle_clicked_4, circle_clicked_5;
     private TextView my_score_view, opo_score_view, round_value_view;
-    private List<String> colors = Arrays.asList("green", "gray", "blue", "red", "yellow");
+    private final List<String> colors = Arrays.asList("green", "gray", "blue", "red", "yellow");
     private List<String> select_color = new ArrayList<>();
     private ArrayList<ImageView> clicked_images = new ArrayList<>();
     private ProgressDialog progress = null;
@@ -86,18 +86,6 @@ public class GameActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         // disable back button press
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(mMessageReceiver, new IntentFilter(NEXT_TURN_ACTION));
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(mMessageReceiver);
     }
 
     private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
