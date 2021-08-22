@@ -1,5 +1,6 @@
 package com.example.openugame.activities;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -73,8 +75,8 @@ public class MainActivity extends AppCompatActivity {
         //Authenticate
         FirebaseAuth.getInstance().signInAnonymously()
                 .addOnCompleteListener(this, task -> {
-                    progress.dismiss();
                     if (task.isSuccessful()) {
+                        progress.dismiss();
                         Log.d("Gal", "signInAnonymously:success");
                     } else {
                         progress.setMessage("Failed to do firebase authentication...");

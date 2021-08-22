@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.Objects;
 
-public class MessageListener extends FirebaseMessagingService {
+    public class MessageListener extends FirebaseMessagingService {
 
     public static String token;
 

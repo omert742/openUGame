@@ -169,7 +169,7 @@ public class GameActivity extends AppCompatActivity {
         double difference_sec = difference / 1000.0;
         Collections.reverse(select_color);
         if (select_color.equals(colors)) {
-            progress.setMessage("Perfect!!! it took you " + difference_sec + " sec...\nWaiting for the opponent result...");
+            progress.setMessage("Perfect!!! it took you \n" + difference_sec + " sec...\nWaiting for the opponent result...");
             progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
             progress.show();
 
