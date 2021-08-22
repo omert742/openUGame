@@ -60,19 +60,19 @@ exports.sendScore = functions.https.onCall((data: any, context: CallableContext)
       updates[`turns/${currentTurn}`] = context.instanceIdToken;
       updates["currentTurn"] = currentTurn + 1;
       dbRef.update(updates).then(() => {
-        console.log("Updated game value, sending message to players");
-        const payload = {
-          data: {
-            action: "NEXT_TURN",
-            value: context.instanceIdToken?.toString?.() || "",
-          },
-        };
-        sendMessageToDevice([game.player1.id, game.player2.id], payload).then(() => {
-          console.log("Message sent to players");
-        });
+        console.log("Updated game value, sending message to players. waiting for other player result");
       });
     } else {
-      console.log("Received a score that isn't relevant");
+      // losing players sent score, send message to both players to go to next turn
+      const payload = {
+        data: {
+          action: "NEXT_TURN",
+          value: game.turns?.[currentTurn - 1],
+        },
+      };
+      sendMessageToDevice([game.player1.id, game.player2.id], payload).then(() => {
+        console.log("Message sent to players");
+      });
     }
   });
 });

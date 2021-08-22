@@ -5,6 +5,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
@@ -16,7 +18,7 @@ import java.util.Objects;
 
 public class MessageListener extends FirebaseMessagingService {
 
-    public static String token;
+    public static String token = null;
 
     public static final String START_GAME_ACTION = "START_GAME";
     public static final String NEXT_TURN_ACTION = "NEXT_TURN";
@@ -31,21 +33,12 @@ public class MessageListener extends FirebaseMessagingService {
     @Override
     public void onCreate() {
         broadcaster = LocalBroadcastManager.getInstance(this);
-
-        FirebaseMessaging.getInstance().getToken()
-                .addOnCompleteListener(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.w(TAG, "Fetching FCM registration token failed", task.getException());
-                        return;
-                    }
-                    token = task.getResult();
-                });
     }
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
+        Log.i(TAG, "New message received");
         // Check if message contains a data payload.
-        remoteMessage.getData();
         try {
             Intent intent;
             Map<String, String> data = remoteMessage.getData();
@@ -78,9 +71,17 @@ public class MessageListener extends FirebaseMessagingService {
         }
     }
 
+    public static Task<String> getToken(){
+        return FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task2 -> {
+            token = task2.getResult();
+            Log.i("Gal", "My token is " + token);
+        });
+    }
+
     @Override
     public void onNewToken(@NonNull @NotNull String s) {
         super.onNewToken(s);
+        Log.i(TAG, "onNewToken: received new token");
         token = s;
     }
 }

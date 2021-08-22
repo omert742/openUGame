@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.openugame.R;
+import com.example.openugame.listeners.MessageListener;
 import com.example.openugame.utils.Player;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -31,6 +32,7 @@ import java.util.Objects;
 
 import static com.example.openugame.listeners.MessageListener.VALUE_KEY;
 import static com.example.openugame.listeners.MessageListener.START_GAME_ACTION;
+import static com.example.openugame.listeners.MessageListener.getToken;
 
 public class MainActivity extends AppCompatActivity {
     private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -63,8 +65,6 @@ public class MainActivity extends AppCompatActivity {
         firebaseAppCheck.installAppCheckProviderFactory(
                 DebugAppCheckProviderFactory.getInstance());
 
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        database.setPersistenceEnabled(false);
         progress = new ProgressDialog(this);
         progress.setTitle("Loading");
         progress.setMessage("Firebase authentication...");
@@ -73,13 +73,17 @@ public class MainActivity extends AppCompatActivity {
         //Authenticate
         FirebaseAuth.getInstance().signInAnonymously()
                 .addOnCompleteListener(this, task -> {
-                    progress.dismiss();
                     if (task.isSuccessful()) {
-                        Log.d("Gal", "signInAnonymously:success");
+                        getToken().addOnCompleteListener(task2 -> {
+                            if (task2.isSuccessful()) {
+                                progress.cancel();
+                            }else {
+                                progress.setMessage("Failed to get firebase messaging token");
+                            }
+                        });
+
                     } else {
                         progress.setMessage("Failed to do firebase authentication...");
-                        progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-                        progress.show();
                     }
                 });
 
