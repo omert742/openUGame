@@ -74,13 +74,15 @@ exports.checkScore = functions.https.onCall((data: any, context: CallableContext
     functions.logger.log(`my token token:  ${myToken}`);
     if (game.turns?.[currentTurn]?.winner) {
       return;// already sent a message regarding a winner,ignore check
-    } else if (game.turns?.[currentTurn]?.[opponentToken]) {
-      const myResult = game.turns?.[currentTurn]?.[myToken];
-      const opponentResult = game.turns?.[currentTurn]?.[myToken];
+    }
 
-      functions.logger.log(`opponent result:  ${opponentResult}`);
-      functions.logger.log(`my result result:  ${myResult}`);
+    const myResult = game.turns?.[currentTurn]?.[myToken];
+    const opponentResult = game.turns?.[currentTurn]?.[opponentToken];
 
+    functions.logger.log(`opponent result:  ${opponentResult}`);
+    functions.logger.log(`my result result:  ${myResult}`);
+
+    if (myResult && opponentResult) {
       if (new Date(myResult) > new Date(opponentResult)) {
         winner = opponentResult;
       } else {
@@ -88,14 +90,14 @@ exports.checkScore = functions.https.onCall((data: any, context: CallableContext
       }
     }
 
-    if (winner) {
+    if (winner.length > 0) {
+      functions.logger.log(`winner was found:  ${winner}`);
       updates[`turns/${currentTurn}/winner`] = winner;
+      updates["currentTurn"] = currentTurn + 1;
     }
 
-    updates["currentTurn"] = currentTurn + 1;
-
     functions.logger.log("updating db values");
-    dbRef.update(updates).then(() => {
+    dbRef.update(updates).then(async () => {
       functions.logger.log("Updated DB values");
 
       if (winner) {
@@ -107,7 +109,7 @@ exports.checkScore = functions.https.onCall((data: any, context: CallableContext
         };
 
 
-        sendMessageToDevice([game.player1.id, game.player2.id], payload).then(() => {
+        await sendMessageToDevice([game.player1.id, game.player2.id], payload).then(() => {
           functions.logger.log("Message sent to players");
         });
       } else {
@@ -281,8 +283,11 @@ const startMatchMaking = async (players: Player[]) => {
  * @param {string} payload The payload we want to send
  */
 const sendMessageToDevice = async (deviceIDs: string[], payload: MessagePayload) => {
+  deviceIDs.forEach((deviceID: string) => {
+    functions.logger.info("sending message to "+ deviceID);
+  });
   await admin.messaging().sendToDevice(deviceIDs, payload, {
-    timeToLive: 60, // keep message alive only for 1 minute
+    timeToLive: 300, // keep message alive only for 5 minute
     priority: "high",
   });
 };
