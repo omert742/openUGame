@@ -140,7 +140,6 @@ public class MainActivity extends AppCompatActivity {
                     .call(data)
                     .continueWith(task -> {
                         Log.i("Gal", " Continue with then async");
-
                         progress.setMessage("Waiting for opponent...");
                         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
                         progress.show();

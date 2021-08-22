@@ -31,11 +31,39 @@ import java.util.Objects;
     private LocalBroadcastManager broadcaster;
 
     @Override
+    public boolean onUnbind(Intent intent) {
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        super.onRebind(intent);
+    }
+
+        @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+        @Override
     public void onCreate() {
+        Log.i(TAG, "onCreate  : " );
         broadcaster = LocalBroadcastManager.getInstance(this);
     }
 
     @Override
+    public void onMessageSent(@NonNull String s) {
+        Log.i(TAG, "onMessageSent New message received : "+s );
+        super.onMessageSent(s);
+    }
+
+    @Override
+    public void onSendError(@NonNull String s, @NonNull Exception e) {
+        Log.i(TAG, "onSendError  : "+e.toString() );
+        super.onSendError(s, e);
+    }
+
+        @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         Log.i(TAG, "New message received");
         // Check if message contains a data payload.
@@ -49,7 +77,6 @@ import java.util.Objects;
                     intent = new Intent(START_GAME_ACTION);
                     intent.putExtra(VALUE_KEY, data.get(VALUE_KEY));
                     broadcaster.sendBroadcast(intent);
-
                     break;
 
                 case NEXT_TURN_ACTION:
@@ -60,7 +87,7 @@ import java.util.Objects;
                     break;
 
                 case "ERROR":
-                    //TODO : Tell the user an error occurred and send back to waiting
+
                     break;
 
                 default:
