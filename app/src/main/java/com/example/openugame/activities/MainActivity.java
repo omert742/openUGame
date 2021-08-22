@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-    public ProgressDialog progress = null;
+    private ProgressDialog progress = null;
     private Player player;
 
     @Override
@@ -62,16 +62,24 @@ public class MainActivity extends AppCompatActivity {
                 new IntentFilter(START_GAME_ACTION)
         );
         setContentView(R.layout.activity_main);
-        FirebaseApp.initializeApp(/*context=*/ this);
-        FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
-        firebaseAppCheck.installAppCheckProviderFactory(
-                DebugAppCheckProviderFactory.getInstance());
+        initAndShowDialog();
+        initFireBase();
+        setListeners();
+    }
 
+    private void initAndShowDialog(){
         progress = new ProgressDialog(this);
         progress.setTitle("Loading");
         progress.setMessage("Firebase authentication...");
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
         progress.show();
+    }
+
+    private void initFireBase(){
+        FirebaseApp.initializeApp(/*context=*/ this);
+        FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
+        firebaseAppCheck.installAppCheckProviderFactory(
+                DebugAppCheckProviderFactory.getInstance());
         //Authenticate
         FirebaseAuth.getInstance().signInAnonymously()
                 .addOnCompleteListener(this, task -> {
@@ -89,7 +97,9 @@ public class MainActivity extends AppCompatActivity {
                         progress.setMessage("Failed to do firebase authentication...");
                     }
                 });
+    }
 
+    private void setListeners(){
         TextInputEditText playerName = findViewById(R.id.playerName);
         Button connectButton = findViewById(R.id.button);
 
@@ -130,27 +140,22 @@ public class MainActivity extends AppCompatActivity {
                     .call(data)
                     .continueWith(task -> {
                         Log.i("Gal", " Continue with then async");
-
                         progress.setMessage("Waiting for opponent...");
                         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
                         progress.show();
                         return "";
                     }).addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            Log.i("Gal", "Message sent successfully");
-                        } else {
-                            Log.i("Gal", "Message failed");
-                            progress.setMessage("Failed to do be added to waiting list ...");
-                            progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-                            progress.show();
-                        }
+                if (task.isSuccessful()) {
+                    Log.i("Gal", "Message sent successfully");
+                } else {
+                    Log.i("Gal", "Message failed");
+                    progress.setMessage("Failed to do be added to waiting list ...");
+                    progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
+                    progress.show();
+                }
 
-                    });
-
-
+            });
         });
-
-
     }
 
     @Override
@@ -165,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(mMessageReceiver);
     }
 
-    public void showDialog(String msg){
+    private void showDialog(String msg){
         AlertDialog alertDialog = null;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage(msg);

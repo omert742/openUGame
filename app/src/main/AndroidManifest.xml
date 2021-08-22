@@ -24,7 +24,7 @@
             android:screenOrientation="landscape">
         </activity>
         <service
-            android:name=".listeners.MessageListener"
+            android:name="com.example.openugame.listeners.MessageListener"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
