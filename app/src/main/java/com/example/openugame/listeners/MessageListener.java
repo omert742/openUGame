@@ -71,7 +71,13 @@ import java.util.Objects;
         }
     }
 
-    public static Task<String> getToken(){
+        @Override
+        public void onDeletedMessages() {
+            super.onDeletedMessages();
+            Log.i(TAG, "onDeletedMessages: Message was deleted");
+        }
+
+        public static Task<String> getToken(){
         return FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task2 -> {
             token = task2.getResult();
             Log.i("Gal", "My token is " + token);

@@ -11,6 +11,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -43,9 +44,6 @@ public class GameActivity extends AppCompatActivity {
     public int round_num = 1;
     public int my_score = 0;
     public int opponent_score = 0;
-    private String gameID;
-
-
     private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -55,10 +53,11 @@ public class GameActivity extends AppCompatActivity {
                 GameActivity.this.newTurn(winner_token.equals(MessageListener.token));
 
             } catch (Exception e) {
-                showDialog("Error : "+e.toString());
+                showDialog("Error : " + e.toString());
             }
         }
     };
+    private String gameID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +78,7 @@ public class GameActivity extends AppCompatActivity {
 
     /**
      * Set up a new turn and update UI parameters
+     *
      * @param i_won True if current user won
      */
     private void newTurn(Boolean i_won) {
@@ -157,16 +157,12 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
-    public void showDialog(String msg){
+    public void showDialog(String msg) {
         AlertDialog alertDialog = null;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage(msg);
-        AlertDialog finalAlertDialog = alertDialog;
         alertDialogBuilder.setPositiveButton("Ok",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-                    }
+                (arg0, arg1) -> {
                 });
         alertDialog = alertDialogBuilder.create();
         alertDialog.show();
@@ -196,17 +192,46 @@ public class GameActivity extends AppCompatActivity {
             FirebaseFunctions.getInstance().getHttpsCallable("sendScore")
                     .call(data)
                     .continueWith(task -> "").addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            // TODO: sent score successfully
-                        } else {
-                            showDialog("Failed to send score : ");
-                        }
+                if (task.isSuccessful()) {
+                    checkScore();
+                } else {
+                    showDialog("Failed to send score : ");
+                }
 
-                    });
+            });
         } else {
             Toast.makeText(GameActivity.this, "Seems you've been wrong...", Toast.LENGTH_LONG).show();
             resetAllCircle();
         }
+    }
+
+    private void checkScore() {
+        new CountDownTimer(5000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                return;
+            }
+
+            public void onFinish() {
+                Log.i("Gal", "onFinish: Checking score..");
+                Map<String, Object> data = new HashMap<>();
+                data.put("gameID", GameActivity.this.gameID);
+                data.put("turn", GameActivity.this.round_num);
+                FirebaseFunctions.getInstance().getHttpsCallable("checkScore")
+                        .call(data)
+                        .continueWith(task -> "").addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        checkScore();
+                    } else {
+                        showDialog("Failed checking opponent score ");
+                    }
+
+                });
+            }
+
+        }.start();
+
+
     }
 
     @Override
