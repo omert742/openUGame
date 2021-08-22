@@ -52,14 +52,10 @@ public class GameActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
                 new IntentFilter(NEXT_TURN_ACTION)
         );
-
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_game);
         initObjects();
         randomCircles();
-
-        Intent intent = getIntent();
-        this.gameID = intent.getStringExtra(VALUE_KEY);
     }
 
     /**
@@ -115,6 +111,8 @@ public class GameActivity extends AppCompatActivity {
     };
 
     private void initObjects() {
+        Intent intent = getIntent();
+        this.gameID = intent.getStringExtra(VALUE_KEY);
         circle_1 = findViewById(R.id.circle_1);
         circle_2 = findViewById(R.id.circle_2);
         circle_3 = findViewById(R.id.circle_3);
@@ -140,7 +138,6 @@ public class GameActivity extends AppCompatActivity {
         round_value_view = findViewById(R.id.round_value);
         my_score_view = findViewById(R.id.my_score);
         opo_score_view = findViewById(R.id.opo_score);
-
         String yellow_color = "yellow";
         String red_color = "red";
         String blue_color = "blue";
