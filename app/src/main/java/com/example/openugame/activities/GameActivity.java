@@ -53,6 +53,7 @@ public class GameActivity extends AppCompatActivity {
                 GameActivity.this.newTurn(winner_token.equals(MessageListener.token));
 
             } catch (Exception e) {
+                Log.i("Gal", "Error : "+e.toString());
                 //TODO : error message
             }
         }
