@@ -3,9 +3,11 @@ package com.example.openugame.activities;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -53,8 +55,7 @@ public class GameActivity extends AppCompatActivity {
                 GameActivity.this.newTurn(winner_token.equals(MessageListener.token));
 
             } catch (Exception e) {
-                Log.i("Gal", "Error : "+e.toString());
-                //TODO : error message
+                showDialog("Error : "+e.toString());
             }
         }
     };
@@ -156,6 +157,21 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    public void showDialog(String msg){
+        AlertDialog alertDialog = null;
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage(msg);
+        AlertDialog finalAlertDialog = alertDialog;
+        alertDialogBuilder.setPositiveButton("Ok",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface arg0, int arg1) {
+                    }
+                });
+        alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
+
     public void showMySelected(String color, ImageView v1) {
         setCircleColor(v1, color);
         select_color.add(color);
@@ -183,7 +199,7 @@ public class GameActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             // TODO: sent score successfully
                         } else {
-                            //TODO: failed to send score
+                            showDialog("Failed to send score : ");
                         }
 
                     });

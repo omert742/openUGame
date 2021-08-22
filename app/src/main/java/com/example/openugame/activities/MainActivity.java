@@ -1,9 +1,11 @@
 package com.example.openugame.activities;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -46,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
                 myIntent.putExtra(VALUE_KEY, intent.getExtras().get(VALUE_KEY).toString());
                 MainActivity.this.startActivity(myIntent);
             } catch (Exception e) {
-                //TODO : error message
+                showDialog("Error in broadcast receiver : "+e.toString());
             }
         }
     };
@@ -56,12 +58,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
                 new IntentFilter(START_GAME_ACTION)
         );
         setContentView(R.layout.activity_main);
-
         FirebaseApp.initializeApp(/*context=*/ this);
         FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
         firebaseAppCheck.installAppCheckProviderFactory(
@@ -163,6 +163,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(mMessageReceiver);
-        // TODO: remove player from waiting list
+    }
+
+    public void showDialog(String msg){
+        AlertDialog alertDialog = null;
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage(msg);
+        AlertDialog finalAlertDialog = alertDialog;
+        alertDialogBuilder.setPositiveButton("Ok",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface arg0, int arg1) {
+                    }
+                });
+        alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
     }
 }
