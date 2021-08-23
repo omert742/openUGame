@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -165,12 +164,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopApp(String msg){
-        AlertDialog alertDialog = null;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage(msg);
         alertDialogBuilder.setPositiveButton("Ok",
                 (arg0, arg1) -> MainActivity.this.finish());
-        alertDialog = alertDialogBuilder.create();
+        AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
         alertDialog.setCancelable(false);
     }
