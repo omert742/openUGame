@@ -21,7 +21,6 @@ import java.util.Objects;
     public static String token = null;
 
     public static final String START_GAME_ACTION = "START_GAME";
-    public static final String NEXT_TURN_ACTION = "NEXT_TURN";
     public static final String VALUE_KEY = "value";
     private static final String TAG = "Gal";
 
@@ -77,17 +76,6 @@ import java.util.Objects;
                     intent = new Intent(START_GAME_ACTION);
                     intent.putExtra(VALUE_KEY, data.get(VALUE_KEY));
                     broadcaster.sendBroadcast(intent);
-                    break;
-
-                case NEXT_TURN_ACTION:
-                    Log.i(TAG, "Next turn..");
-                    intent = new Intent(NEXT_TURN_ACTION);
-                    intent.putExtra(VALUE_KEY, data.get(VALUE_KEY));
-                    broadcaster.sendBroadcast(intent);
-                    break;
-
-                case "ERROR":
-
                     break;
 
                 default:

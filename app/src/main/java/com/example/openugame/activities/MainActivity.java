@@ -1,6 +1,5 @@
 package com.example.openugame.activities;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -12,14 +11,12 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.openugame.R;
-import com.example.openugame.listeners.MessageListener;
 import com.example.openugame.utils.Player;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -27,7 +24,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.functions.FirebaseFunctions;
 
 import java.util.HashMap;
@@ -48,11 +44,13 @@ public class MainActivity extends AppCompatActivity {
                 myIntent.putExtra(VALUE_KEY, intent.getExtras().get(VALUE_KEY).toString());
                 MainActivity.this.startActivity(myIntent);
             } catch (Exception e) {
-                showDialog("Error in broadcast receiver : "+e.toString());
+                stopApp("Error in broadcast receiver : "+e.toString());
             }
         }
     };
     private ProgressDialog progress = null;
+    private Button connectButton;
+    private TextInputEditText playerName;
     private Player player;
 
     @Override
@@ -100,24 +98,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setListeners(){
-        TextInputEditText playerName = findViewById(R.id.playerName);
-        Button connectButton = findViewById(R.id.button);
+        playerName = findViewById(R.id.playerName);
+        connectButton = findViewById(R.id.button);
 
         playerName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                connectButton.setEnabled(true);
-                ((TextInputLayout) findViewById(R.id.textInputLayout)).setError("");
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-
+                MainActivity.this.checkValidPlayerName();
             }
         });
 
@@ -130,8 +125,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 player = new Player(Objects.requireNonNull(playerName.getText()).toString());
             } catch (Exception e) {
-                ((TextInputLayout) findViewById(R.id.textInputLayout)).setError("Invalid name");
-                return;
+                stopApp("Failed to initialize player name");
             }
 
             Map<String, Object> data = new HashMap<>();
@@ -148,10 +142,8 @@ public class MainActivity extends AppCompatActivity {
                 if (task.isSuccessful()) {
                     Log.i("Gal", "Message sent successfully");
                 } else {
-                    Log.i("Gal", "Message failed");
-                    progress.setMessage("Failed to do be added to waiting list ...");
-                    progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-                    progress.show();
+                    Log.e("Gal", "Message failed");
+                    stopApp("Failed to do be added to waiting list ...");
                 }
 
             });
@@ -162,6 +154,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver(mMessageReceiver, new IntentFilter(START_GAME_ACTION));
+        progress.cancel();
+        checkValidPlayerName();
     }
 
     @Override
@@ -170,18 +164,27 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(mMessageReceiver);
     }
 
-    private void showDialog(String msg){
+    private void stopApp(String msg){
         AlertDialog alertDialog = null;
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage(msg);
-        AlertDialog finalAlertDialog = alertDialog;
         alertDialogBuilder.setPositiveButton("Ok",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-                    }
-                });
+                (arg0, arg1) -> MainActivity.this.finish());
         alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+        alertDialog.setCancelable(false);
+    }
+
+    private void checkValidPlayerName() {
+        if(Player.isValidName(this.playerName.getText().toString())){
+            connectButton.setEnabled(true);
+            ((TextInputLayout) findViewById(R.id.textInputLayout)).setError("");
+        }else {
+            connectButton.setEnabled(false);
+
+            if(this.playerName.getText().toString().length() > 0) {
+                ((TextInputLayout) findViewById(R.id.textInputLayout)).setError("Invalid name");
+            }
+        }
     }
 }

@@ -53,7 +53,7 @@ exports.checkScore = functions.https.onCall((data: any, context: CallableContext
     throw new functions.https.HttpsError("invalid-argument", "No turn provided");
   }
 
-  admin.database().ref("/games").child(gameID).once("value").then((snapshot: DataSnapshot) => {
+  return admin.database().ref("/games").child(gameID).once("value").then((snapshot: DataSnapshot) => {
     const dbRef = snapshot.ref;
     const game: Game = <Game>snapshot.toJSON();
     const currentTurn = game.currentTurn;
@@ -72,39 +72,45 @@ exports.checkScore = functions.https.onCall((data: any, context: CallableContext
 
     functions.logger.log(`opponent token:  ${opponentToken}`);
     functions.logger.log(`my token token:  ${myToken}`);
-    if (game.turns?.[currentTurn]?.winner) {
+    if (!game.turns?.[turn]) {
       return;// already sent a message regarding a winner,ignore check
     }
 
-    const myResult = game.turns?.[currentTurn]?.[myToken];
-    const opponentResult = game.turns?.[currentTurn]?.[opponentToken];
+    const myResult = new Date(game.turns?.[turn]?.[myToken]);
+    const opponentResult = new Date(game.turns?.[turn]?.[opponentToken]);
+
+    functions.logger.log(`game id:  ${gameID} received turn : ${turn} current turn in db  : ${currentTurn}`);
 
     functions.logger.log(`opponent result:  ${opponentResult}`);
     functions.logger.log(`my result result:  ${myResult}`);
 
-    if (myResult && opponentResult) {
-      if (new Date(myResult) > new Date(opponentResult)) {
-        winner = opponentResult;
+    if (myResult?.getTime?.() > 0 && opponentResult?.getTime?.() > 0) {
+      if (myResult.getTime() > opponentResult.getTime()) {
+        winner = opponentToken;
       } else {
         winner = myToken;
       }
     }
 
-    if (winner.length > 0) {
+    if (winner.length > 0 && turn == currentTurn) {
       functions.logger.log(`winner was found:  ${winner}`);
       updates[`turns/${currentTurn}/winner`] = winner;
       updates["currentTurn"] = currentTurn + 1;
     }
 
     functions.logger.log("updating db values");
-    dbRef.update(updates).then(async () => {
+    return dbRef.update(updates).then(async () => {
       functions.logger.log("Updated DB values");
 
-      if (winner) {
+      return {
+        "winner": winner,
+        "turn": currentTurn,
+      };
+      /*      if (winner) {
         const payload = {
           data: {
             action: "NEXT_TURN",
-            value: game.turns?.[currentTurn - 1].winner,
+            value: winner,
           },
         };
 
@@ -115,6 +121,7 @@ exports.checkScore = functions.https.onCall((data: any, context: CallableContext
       } else {
         functions.logger.log("waiting for both players result..");
       }
+      */
     });
   });
 });
@@ -289,6 +296,7 @@ const sendMessageToDevice = async (deviceIDs: string[], payload: MessagePayload)
   await admin.messaging().sendToDevice(deviceIDs, payload, {
     timeToLive: 300, // keep message alive only for 5 minute
     priority: "high",
+    collapseKey: "openuMessage",
   });
 };
 

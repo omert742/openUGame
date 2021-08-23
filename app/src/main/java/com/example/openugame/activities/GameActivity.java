@@ -1,15 +1,10 @@
 package com.example.openugame.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
@@ -18,8 +13,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.openugame.R;
-import com.example.openugame.listeners.MessageListener;
+import com.google.android.gms.tasks.Continuation;
 import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.HttpsCallableResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,14 +25,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.example.openugame.listeners.MessageListener.NEXT_TURN_ACTION;
 import static com.example.openugame.listeners.MessageListener.VALUE_KEY;
+import static com.example.openugame.listeners.MessageListener.token;
 
 public class GameActivity extends AppCompatActivity {
 
     private ImageView circle_1, circle_2, circle_3, circle_4, circle_5, circle_c_1, circle_c_2, circle_c_3, circle_c_4, circle_c_5, circle_clicked_1, circle_clicked_2, circle_clicked_3, circle_clicked_4, circle_clicked_5;
     private TextView my_score_view, opo_score_view, round_value_view;
-    private final List<String> colors = Arrays.asList("green", "gray", "blue", "red", "yellow");
     private List<String> select_color = new ArrayList<>();
     private ArrayList<ImageView> clicked_images = new ArrayList<>();
     private ProgressDialog progress = null;
@@ -46,13 +41,14 @@ public class GameActivity extends AppCompatActivity {
     private int opponent_score = 0;
     private String gameID;
 
+    private final List<String> colors = Arrays.asList("green", "gray", "blue", "red", "yellow");
+    private final int MAX_TURNS = 3;
+    private final int OPPONENT_TIMEOUT = 60 * 1000; // How long to wait for opponent result before considered as 'disconnected'
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i("Gal", "Starting game activity");
-        LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
-                new IntentFilter(NEXT_TURN_ACTION)
-        );
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_game);
         initObjects();
@@ -70,37 +66,35 @@ public class GameActivity extends AppCompatActivity {
         resetAllCircle();
         randomCircles();
 
-        round_num += 1;
-        round_value_view.setText(String.valueOf(GameActivity.this.round_num));
-        progress.cancel();
+        this.round_num++;
+        this.round_value_view.setText(String.valueOf(GameActivity.this.round_num));
+        this.progress.cancel();
 
         if (i_won) {
-            my_score++;
+            this.my_score++;
         } else {
-            opponent_score++;
+            this.opponent_score++;
         }
-        my_score_view.setText(String.valueOf(GameActivity.this.my_score));
-        opo_score_view.setText(String.valueOf(GameActivity.this.opponent_score));
+        this.my_score_view.setText(String.valueOf(GameActivity.this.my_score));
+        this.opo_score_view.setText(String.valueOf(GameActivity.this.opponent_score));
+
+        if(this.round_num > this.MAX_TURNS){
+            String msg;
+            if(my_score > opponent_score){
+                msg = "What an amazing victory !";
+            }else if(opponent_score > my_score){
+                msg = "You should consider improving your skills\nSadly,you've lost the game";
+            }else {
+                msg = "Its a tie!";
+            }
+            stopGame(msg);
+        }
     }
 
     @Override
     public void onBackPressed() {
         // disable back button press
     }
-
-    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            try {
-                // check if winning token equals to current player
-                String winner_token = intent.getExtras().get(VALUE_KEY).toString();
-                GameActivity.this.newTurn(winner_token.equals(MessageListener.token));
-
-            } catch (Exception e) {
-                showDialog("Error : "+e.toString());
-            }
-        }
-    };
 
     private void initObjects() {
         Intent intent = getIntent();
@@ -157,19 +151,14 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
-    private void showDialog(String msg){
-        AlertDialog alertDialog = null;
+    private void stopGame(String msg){
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setMessage(msg);
-        AlertDialog finalAlertDialog = alertDialog;
-        alertDialogBuilder.setPositiveButton("Ok",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface arg0, int arg1) {
-                    }
-                });
-        alertDialog = alertDialogBuilder.create();
+        alertDialogBuilder.setPositiveButton("Go back to main menu",
+                (arg0, arg1) -> GameActivity.this.finish());
+        AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
+        alertDialog.setCancelable(false);
     }
 
     private void showMySelected(String color, ImageView v1) {
@@ -186,7 +175,7 @@ public class GameActivity extends AppCompatActivity {
         double difference_sec = difference / 1000.0;
         Collections.reverse(select_color);
         if (select_color.equals(colors)) {
-            progress.setMessage("Perfect!!! it took you \n" + difference_sec + " sec...\nWaiting for the opponent result...");
+            progress.setMessage("Perfect!!! \nSending result to server");
             progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
             progress.show();
 
@@ -197,9 +186,11 @@ public class GameActivity extends AppCompatActivity {
                     .call(data)
                     .continueWith(task -> "").addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    checkScore();
+                    progress.setMessage("Waiting for the opponent result...");
+                    this.checkScore(this.round_num);
                 } else {
-                    showDialog("Failed to send score : ");
+                    Log.e("Gal", "finishRoundActions: " ,task.getException());
+                    this.stopGame("Failed to send score");
                 }
 
             });
@@ -209,28 +200,46 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    private void checkScore() {
-        new CountDownTimer(5000, 1000) {
+    private void checkScore(int turn) {
+
+        new CountDownTimer(this.OPPONENT_TIMEOUT, 2 * 1000) {
 
             public void onTick(long millisUntilFinished) {
-                return;
-            }
-
-            public void onFinish() {
-                Log.i("Gal", "onFinish: Checking score..");
+                Log.i("Gal", "onTick: Checking score..");
                 Map<String, Object> data = new HashMap<>();
                 data.put("gameID", GameActivity.this.gameID);
                 data.put("turn", GameActivity.this.round_num);
                 FirebaseFunctions.getInstance().getHttpsCallable("checkScore")
-                        .call(data)
-                        .continueWith(task -> "").addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        checkScore();
-                    } else {
-                        showDialog("Failed checking opponent score ");
-                    }
+                        .call(data).continueWith((Continuation<HttpsCallableResult, Object>) task -> {
+                            try {
+                                if (task.isSuccessful()) {
+                                    HashMap res = (HashMap) Objects.requireNonNull(task.getResult()).getData();
+                                    if(res != null) {
+                                        String winner = (String) res.get("winner");
+                                        int turn = (int) res.get("turn");
 
+                                        // found a winner for current turn, set up a new turn
+                                        if (winner.length() > 0 && turn != GameActivity.this.round_num) {
+                                            GameActivity.this.newTurn(winner.equals(token));
+                                            cancel();// stop timer
+                                        }
+                                    }
+
+                                } else {
+                                    throw Objects.requireNonNull(task.getException());
+                                }
+                            }catch (Exception e){
+                                Log.e("Gal", "onTick: Failed to check score", e);
+                            }
+                    return null;
                 });
+            }
+
+            public void onFinish() {
+                if(turn == GameActivity.this.round_num){
+                    Log.e("Gal", "onFinish: count time ended but turn didn't change, assume disconnection");
+                    stopGame("Seems like your opponent left the game, disconnecting...");
+                }
             }
 
         }.start();
@@ -238,17 +247,7 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(mMessageReceiver, new IntentFilter(NEXT_TURN_ACTION));
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(mMessageReceiver);
-    }
 
     private void randomCircles() {
         startTime = System.currentTimeMillis();

@@ -25,7 +25,7 @@ public class Player {
         return result;
     }
 
-    private boolean isValidName(String name){
+    public static boolean isValidName(String name){
         String regex = "[a-zA-Z0-9]{2,16}";
         return Pattern.compile(regex).matcher(name).matches();
     }

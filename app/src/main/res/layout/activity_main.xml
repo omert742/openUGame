@@ -26,12 +26,15 @@
         android:id="@+id/textInputLayout"
         android:layout_width="240dp"
         android:layout_height="wrap_content"
+        android:textColorHint="#000000"
         app:errorEnabled="true"
         app:errorTextAppearance="@style/TextAppearance.AppCompat.Body1"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.621">
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -40,6 +43,7 @@
         android:layout_width="240dp"
         android:layout_height="wrap_content"
         android:hint="Enter Player name"
+        android:minHeight="48dp"
         android:singleLine="true"
         android:textColor="#FFFFFF"
         android:textColorHighlight="#FFFFFF"
