@@ -42,7 +42,7 @@ public class GameActivity extends AppCompatActivity {
     private String gameID;
 
     private final List<String> colors = Arrays.asList("green", "gray", "blue", "red", "yellow");
-    private final int MAX_TURNS = 3;
+    private final int MAX_TURNS = 5;
     private final int OPPONENT_TIMEOUT = 60 * 1000; // How long to wait for opponent result before considered as 'disconnected'
 
     @Override
